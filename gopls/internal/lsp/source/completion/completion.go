@@ -104,15 +104,16 @@ type CompletionItem struct {
 
 // completionOptions holds completion specific configuration.
 type completionOptions struct {
-	unimported        bool
-	documentation     bool
-	fullDocumentation bool
-	placeholders      bool
-	literal           bool
-	snippets          bool
-	postfix           bool
-	matcher           source.Matcher
-	budget            time.Duration
+	unimported            bool
+	documentation         bool
+	fullDocumentation     bool
+	placeholders          bool
+	literal               bool
+	snippets              bool
+	postfix               bool
+	matcher               source.Matcher
+	budget                time.Duration
+	completeFunctionCalls bool
 }
 
 // Snippet is a convenience returns the snippet if available, otherwise
@@ -531,15 +532,16 @@ func Completion(ctx context.Context, snapshot source.Snapshot, fh source.FileHan
 			enabled: opts.DeepCompletion,
 		},
 		opts: &completionOptions{
-			matcher:           opts.Matcher,
-			unimported:        opts.CompleteUnimported,
-			documentation:     opts.CompletionDocumentation && opts.HoverKind != source.NoDocumentation,
-			fullDocumentation: opts.HoverKind == source.FullDocumentation,
-			placeholders:      opts.UsePlaceholders,
-			literal:           opts.LiteralCompletions && opts.InsertTextFormat == protocol.SnippetTextFormat,
-			budget:            opts.CompletionBudget,
-			snippets:          opts.InsertTextFormat == protocol.SnippetTextFormat,
-			postfix:           opts.ExperimentalPostfixCompletions,
+			matcher:               opts.Matcher,
+			unimported:            opts.CompleteUnimported,
+			documentation:         opts.CompletionDocumentation && opts.HoverKind != source.NoDocumentation,
+			fullDocumentation:     opts.HoverKind == source.FullDocumentation,
+			placeholders:          opts.UsePlaceholders,
+			literal:               opts.LiteralCompletions && opts.InsertTextFormat == protocol.SnippetTextFormat,
+			budget:                opts.CompletionBudget,
+			snippets:              opts.InsertTextFormat == protocol.SnippetTextFormat,
+			postfix:               opts.ExperimentalPostfixCompletions,
+			completeFunctionCalls: opts.CompleteFunctionCalls,
 		},
 		// default to a matcher that always matches
 		matcher:        prefixMatcher(""),
@@ -2809,15 +2811,16 @@ func (c *completer) matchingCandidate(cand *candidate) bool {
 	if sig, ok := candType.Underlying().(*types.Signature); ok {
 		if c.inference.assigneesMatch(cand, sig) {
 			// Invoke the candidate if its results are multi-assignable.
-			cand.mods = append(cand.mods, invoke)
+			if c.opts.completeFunctionCalls {
+				cand.mods = append(cand.mods, invoke)
+			}
 			return true
 		}
 	}
 
-	// Default to invoking *types.Func candidates. This is so function
-	// completions in an empty statement (or other cases with no expected type)
-	// are invoked by default.
-	if isFunc(cand.obj) {
+	// Function completions in an empty statement (or other cases with no expected type)
+	// are invoked depending on CompleteFunctionCalls settings. 
+	if c.opts.completeFunctionCalls && isFunc(cand.obj) {
 		cand.mods = append(cand.mods, invoke)
 	}
 

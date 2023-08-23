@@ -269,6 +269,12 @@ such as "someSlice.sort!".
 
 Default: `true`.
 
+##### **completeFunctionCalls** *bool*
+
+completeFunctionCalls enables function auto brackets in function completion responses.
+
+Default: `true`.
+
 #### Diagnostic
 
 ##### **analyses** *map[string]bool*

@@ -147,6 +147,13 @@ var GeneratedAPIJSON = &APIJSON{
 				Hierarchy: "ui.completion",
 			},
 			{
+				Name:      "completeFunctionCalls",
+				Type:      "bool",
+				Doc:       "completeFunctionCalls enables function auto brackets in function completion responses.\n",
+				Default:   "true",
+				Hierarchy: "ui.completion",
+			},
+			{
 				Name: "importShortcut",
 				Type: "enum",
 				Doc:  "importShortcut specifies whether import statements should link to\ndocumentation or go to definitions.\n",
